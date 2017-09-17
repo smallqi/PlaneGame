@@ -43,8 +43,8 @@
             float x = self.LUposition.x + (self.size.width-bullet.size.width)/2;
             [bullet setPosition:CGPointMake(x, self.LUposition.y)];
             //设置速度力量
-            bullet.power = [[GameData alloc]initWithLevel:1]->bullet1.power;
-            bullet.speed = [[GameData alloc]initWithLevel:1]->bullet1.speed;
+            bullet.power = [GameData shareWithLevel:1]->bullet1.power;
+            bullet.speed = [GameData shareWithLevel:1]->bullet1.speed;
             
             return bullet;
         }

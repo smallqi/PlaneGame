@@ -40,6 +40,6 @@ typedef struct BulletData{
     BulletData bullet1;
 }
 
--(id)initWithLevel:(int)level;
++(GameData*)shareWithLevel:(int)level;
 
 @end

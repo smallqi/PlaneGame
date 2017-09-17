@@ -25,9 +25,8 @@
 
 //游戏时间循环
 @property(strong, nonatomic) NSTimer* timer;
-@property int frame;
-//游戏设置参数
-@property(strong, nonatomic) GameData* gameData;
+//游戏记录
+@property(strong, nonatomic) Control* control;
 //背景
 @property CALayer* bgLayer1;
 @property CALayer* bgLayer2;
@@ -54,9 +53,6 @@
 
 //加载资源
 -(void)loadSource {
-    //初始化游戏设置参数
-    self.gameData = [[GameData alloc]initWithLevel:1];
-    
     //加载背景
     self.bgLayer1 = [CALayer layer];
     self.bgLayer1.frame = CGRectMake(0, 0, Screen_Width, Screen_Height);
@@ -70,8 +66,11 @@
     
     //加载英雄
     self.hero = [[Hero alloc]initWithFlyAnima:[[ImageSource shareImageSource]getImagesWithImagesType:HeroFly] WithHitAnima:[[ImageSource shareImageSource]getImagesWithImagesType:HeroHit] WithDeadAnima:[[ImageSource shareImageSource]getImagesWithImagesType:HeroDead]];
+    //[self.view insertSubview:self.hero belowSubview:self.control];
     [self.view addSubview:self.hero];
-    
+    //加载游戏记录
+    self.control = [[Control alloc]initWithFrame:self.view.frame];
+    [self.view addSubview:self.control];
     //子弹
     self.bullets = [[NSMutableArray alloc]init];
     //敌人
@@ -79,25 +78,29 @@
 }
 //初始化资源
 -(void)initSource {
-    self.frame = 0;
+    //游戏记录
+    self.control.frames = 0;
+    self.control.score = 0;
+    self.control.bombNum = 1;
     //设置背景
     self.bgLayer1.frame = CGRectMake(0, 0, Screen_Width, Screen_Height);
     self.bgLayer2.frame = CGRectMake(0, -Screen_Height, Screen_Width, Screen_Height);
     //设置英雄
-    self.hero.hp = self.gameData->hero.hp;
-    self.hero.speed = self.gameData->hero.speed;
-    self.hero.collider = self.gameData->hero.collider;
-    self.hero.fireTimeFrame = self.gameData->hero.fireTimeFrame;
+    self.hero.hp = [GameData shareWithLevel:1]->hero.hp;
+    self.hero.speed = [GameData shareWithLevel:1]->hero.speed;
+    self.hero.collider = [GameData shareWithLevel:1]->hero.collider;
+    self.hero.fireTimeFrame = [GameData shareWithLevel:1]->hero.fireTimeFrame;
     [self.hero setPosition:CGPointMake((Screen_Width-self.hero.size.width)/2, Screen_Height-self.hero.size.height)];
 }
 //开始游戏
 -(void)startGame {
-    self.timer = [NSTimer scheduledTimerWithTimeInterval:self.gameData->game.gameLoopTime target:self selector:@selector(mainLoop) userInfo:nil repeats:true];
+    self.timer = [NSTimer scheduledTimerWithTimeInterval:[GameData shareWithLevel:1]->game.gameLoopTime target:self selector:@selector(mainLoop) userInfo:nil repeats:true];
 }
 
 //游戏主循环
 -(void)mainLoop {
-    self.frame++;
+    self.control.frames++;
+    [self.control updateTimeLabel];
     //移动背景
     [self moveBg];
     //碰撞检测
@@ -107,25 +110,20 @@
     //子弹移动
     [self moveBullets];
     //创建敌人
-    if(self.frame%self.gameData->game.enemyCreatFrame == 0){
+    if(self.control.frames%[GameData shareWithLevel:1]->game.enemyCreatFrame == 0){
         [self createEnemy];
     }
     //创建子弹
-    if(self.frame%self.hero.fireTimeFrame == 0){
+    if(self.control.frames%self.hero.fireTimeFrame == 0){
         Bullet* bullet = [self.hero fire];
         [self.view insertSubview:bullet belowSubview:self.hero];
         [self.bullets addObject:bullet];
     }
-    
-    //防止溢出
-    if(self.frame > 1000) {
-        self.frame = 0;
-    }
 }
 //背景移动
 -(void)moveBg {
-    [self.bgLayer1 setFrame:CGRectOffset(self.bgLayer1.frame, 0, self.gameData->game.bgSpeed)];
-    [self.bgLayer2 setFrame:CGRectOffset(self.bgLayer2.frame, 0, self.gameData->game.bgSpeed)];
+    [self.bgLayer1 setFrame:CGRectOffset(self.bgLayer1.frame, 0, [GameData shareWithLevel:1]->game.bgSpeed)];
+    [self.bgLayer2 setFrame:CGRectOffset(self.bgLayer2.frame, 0, [GameData shareWithLevel:1]->game.bgSpeed)];
     //判断是否出界
     if(self.bgLayer1.frame.origin.y >= Screen_Height) {
         //由于最上层的图画直接移动会造成抖动的视觉效果，所以需要先剔除，再加入最下层
@@ -159,7 +157,8 @@
             [enemy getHitWithPower:1];
             if(enemy.isDead){
                 //得分
-                //[self.control addScore:10];
+                self.control.score += 10;
+                [self.control updateScoreLabel];
                 //播放音乐
                 //[self.audioSoucre playExploreMusic];
                 //移除敌人
@@ -184,11 +183,14 @@
                 [enemy getHitWithPower:bullet.power];
                 if(enemy.isDead) {
                     //得分
-                    //[self.control addScore:10];
+                    self.control.score += 10;
+                    [self.control updateScoreLabel];
                     //播放音乐
                     //[self.audioSoucre playExploreMusic];
                     //移除敌人
-                    [enemy removeFromSuperview];
+                    [enemy playDead];
+                    //[enemy removeFromSuperview];
+                    [self performSelector:@selector(removeViewFromGame:) withObject:enemy afterDelay:0.5];
                     [self.enemys removeObject:enemy];
                     //数组大小发生变化
                     i--;
@@ -200,14 +202,14 @@
 }
 //创建敌人
 -(void)createEnemy {
-    int num = self.gameData->game.enemyCreatNum;
+    int num = [GameData shareWithLevel:1]->game.enemyCreatNum;
     for(int i=0; i<num; i++) {
         //创建
         Enemy* enemy = [[Enemy alloc]initWithFlyAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy1_Fly] WithHitAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy1_Hit] WithDeadAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy1_Dead]];
         //设置默认值
-        enemy.hp = self.gameData->enemy1.hp;
-        enemy.speed = self.gameData->enemy1.speed;
-        enemy.collider = self.gameData->enemy1.collider;
+        enemy.hp = [GameData shareWithLevel:1]->enemy1.hp;
+        enemy.speed = [GameData shareWithLevel:1]->enemy1.speed;
+        enemy.collider = [GameData shareWithLevel:1]->enemy1.collider;
         //设置随机位置
         int x = rand()%(int)(Screen_Width - enemy.size.width);
         [enemy setPosition:CGPointMake(x, -40)];
@@ -271,5 +273,7 @@
     //英雄移动
     [self.hero moveWithDirect:CGPointMake(newPosition.x - self.hero.LUposition.x, newPosition.y - self.hero.LUposition.y)];
 }
-
+-(void)removeViewFromGame:(UIView*)view {
+    [view removeFromSuperview];
+}
 @end

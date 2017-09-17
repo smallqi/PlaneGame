@@ -44,4 +44,22 @@
     }
     return self;
 }
+
++(GameData*)shareWithLevel:(int)level {
+    //为不同等级分别单例一个对象
+    static GameData *gameData1, *gameData2;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gameData1 = [[GameData alloc]initWithLevel:1];
+        gameData2 = [[GameData alloc]initWithLevel:2];
+    });
+    switch (level) {
+        default:
+        case 1:
+            return gameData1;
+        case 2:
+            return gameData2;
+    }
+}
+
 @end

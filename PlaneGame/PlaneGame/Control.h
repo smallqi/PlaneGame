@@ -10,4 +10,12 @@
 
 @interface Control : UIView
 
+@property int score;
+@property int bombNum;
+@property int frames;//用帧数记录游戏时间
+
+-(void)updateScoreLabel;
+-(void)updateBombLabel;
+-(void)updateTimeLabel;
+
 @end

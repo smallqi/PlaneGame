@@ -83,10 +83,11 @@
 }
 //受到攻击
 -(void)getHitWithPower:(int)power {
-    if(_hp > 0)
-        _hp -= power;
-    if(_hp < 0)
+    //减少hp
+    _hp -= power;
+    if(_hp <= 0) {
         _hp = 0;
+    }
 }
 //是否死亡
 -(BOOL)isDead {
