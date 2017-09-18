@@ -83,7 +83,13 @@
 }
 //受到攻击
 -(void)getHitWithPower:(int)power {
-    //减少hp
+    /*
+    //被打动画
+    [self playHit];
+    //播放飞行
+    [self playFly];
+    */
+     //减少hp
     _hp -= power;
     if(_hp <= 0) {
         _hp = 0;

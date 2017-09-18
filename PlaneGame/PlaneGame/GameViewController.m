@@ -91,6 +91,9 @@
     self.hero.collider = [GameData shareWithLevel:1]->hero.collider;
     self.hero.fireTimeFrame = [GameData shareWithLevel:1]->hero.fireTimeFrame;
     [self.hero setPosition:CGPointMake((Screen_Width-self.hero.size.width)/2, Screen_Height-self.hero.size.height)];
+    [self.hero playFly];
+    //背景音乐
+    [[AudioSource share]playBGMusic];
 }
 //开始游戏
 -(void)startGame {
@@ -115,6 +118,9 @@
     }
     //创建子弹
     if(self.control.frames%self.hero.fireTimeFrame == 0){
+        //音乐
+        [[AudioSource share]playShootMusic];
+        //开火
         Bullet* bullet = [self.hero fire];
         [self.view insertSubview:bullet belowSubview:self.hero];
         [self.bullets addObject:bullet];
@@ -150,9 +156,11 @@
             [self.hero getHitWithPower:1];
             if(self.hero.isDead){
                 //音乐
-                //[self.audioSoucre playHeroDead];
-                //[self gameOver];
-                //break;
+                [[AudioSource share]playHeroDead];
+                //动画
+                [self.hero playDead];
+                [self gameOver];
+                break;
             }
             [enemy getHitWithPower:1];
             if(enemy.isDead){
@@ -160,9 +168,10 @@
                 self.control.score += 10;
                 [self.control updateScoreLabel];
                 //播放音乐
-                //[self.audioSoucre playExploreMusic];
+                [[AudioSource share]playExploreMusic];
                 //移除敌人
-                [enemy removeFromSuperview];
+                [enemy playDead];
+                [self performSelector:@selector(removeViewFromGame:) withObject:enemy afterDelay:0.5];
                 [self.enemys removeObject:enemy];
                 //数组大小发生变化
                 i--;
@@ -186,10 +195,9 @@
                     self.control.score += 10;
                     [self.control updateScoreLabel];
                     //播放音乐
-                    //[self.audioSoucre playExploreMusic];
+                    [[AudioSource share]playExploreMusic];
                     //移除敌人
                     [enemy playDead];
-                    //[enemy removeFromSuperview];
                     [self performSelector:@selector(removeViewFromGame:) withObject:enemy afterDelay:0.5];
                     [self.enemys removeObject:enemy];
                     //数组大小发生变化
@@ -247,10 +255,59 @@
         }
     }
 }
+
+//游戏结束
+-(void)gameOver {
+    NSLog(@"GameOver");
+    //停止计时器
+    if(self.timer != nil) {
+        [self.timer invalidate];
+        self.timer = nil;
+    }
+    //停止背景音乐
+    [[AudioSource share]stopBGMusic];
+    //创建警告框
+    NSString* socreStr = [NSString stringWithFormat:@"得分：%d", self.control.score];
+    UIAlertController* alertContoller = [UIAlertController alertControllerWithTitle:@"GameOver" message:socreStr preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction* restratAction = [UIAlertAction actionWithTitle:@"重新开始" style:UIAlertActionStyleDefault handler:^(UIAlertAction* action){
+        [self restartGame];
+    }];
+    [alertContoller addAction:restratAction];
+    UIAlertAction* exitAction = [UIAlertAction actionWithTitle:@"退出游戏" style:UIAlertActionStyleCancel handler:^(UIAlertAction* action){
+        exit(0);
+    }];
+    [alertContoller addAction:exitAction];
+    [self presentViewController:alertContoller animated:true completion:nil];
+    
+}
+
+//开始游戏
+-(void)restartGame {
+    //从场景中删除现有的子弹和敌人
+    while (self.bullets.count > 0) {
+        Bullet* bullet = [self.bullets objectAtIndex:0];
+        [bullet removeFromSuperview];
+        [self.bullets removeObject:bullet];
+    }
+    while (self.enemys.count > 0) {
+        Bullet* enemy = [self.enemys objectAtIndex:0];
+        [enemy removeFromSuperview];
+        [self.enemys removeObject:enemy];
+    }
+    //重新初始化资源设置
+    [self initSource];
+    [self startGame];
+}
+
+
+
+
+
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
+
 
 //override
 //手指一动控制飞机移动
