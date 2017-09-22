@@ -9,6 +9,13 @@
 #import <UIKit/UIKit.h>
 #import "Plane.h"
 
+typedef enum EnemyType{
+    EnemyType1 = 0,
+    EnemyType2
+}EnemyType;
+
 @interface Enemy : Plane
+
+@property EnemyType type;
 
 @end

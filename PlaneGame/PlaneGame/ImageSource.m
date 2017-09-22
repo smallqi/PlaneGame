@@ -13,6 +13,7 @@
 @property(strong, nonatomic)UIImage* bg;
 @property(strong, nonatomic)UIImage* bullet1;
 @property(strong, nonatomic)UIImage* bullet2;
+@property(strong, nonatomic)UIImage* bullet3;
 @property(strong, nonatomic)UIImage* gift1;
 @property(strong, nonatomic)UIImage* gift2;
 
@@ -58,6 +59,7 @@
         self.bg = [UIImage imageNamed:@"background_2.png"];
         self.bullet1 = [UIImage imageNamed:@"bullet1.png"];
         self.bullet2 = [UIImage imageNamed:@"bullet2.png"];
+        self.bullet3 = [UIImage imageNamed:@"bullet3.png"];
         self.gift1 = [UIImage imageNamed:@"enemy4_fly_1.png"];
         self.gift2 = [UIImage imageNamed:@"enemy5_fly_1.png"];
         
@@ -99,6 +101,8 @@
             return self.bullet1;
         case Bullet2:
             return self.bullet2;
+        case Bullet3:
+            return self.bullet3;
         case Gift1:
             return self.gift1;
         case Gift2:

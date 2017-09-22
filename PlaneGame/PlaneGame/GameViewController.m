@@ -36,6 +36,8 @@
 @property(strong, nonatomic) NSMutableArray* bullets;
 //敌人
 @property(strong, nonatomic) NSMutableArray* enemys;
+//敌人子弹
+@property(strong, nonatomic) NSMutableArray* enemysBullets;
 
 @end
 
@@ -75,6 +77,8 @@
     self.bullets = [[NSMutableArray alloc]init];
     //敌人
     self.enemys = [[NSMutableArray alloc]init];
+    //敌人子弹
+    self.enemysBullets = [[NSMutableArray alloc]init];
 }
 //初始化资源
 -(void)initSource {
@@ -89,6 +93,8 @@
     self.hero.hp = [GameData shareWithLevel:1]->hero.hp;
     self.hero.speed = [GameData shareWithLevel:1]->hero.speed;
     self.hero.collider = [GameData shareWithLevel:1]->hero.collider;
+    self.hero.myframes = 0;
+    self.hero.bulletType = 1;
     self.hero.fireTimeFrame = [GameData shareWithLevel:1]->hero.fireTimeFrame;
     [self.hero setPosition:CGPointMake((Screen_Width-self.hero.size.width)/2, Screen_Height-self.hero.size.height)];
     [self.hero playFly];
@@ -112,19 +118,25 @@
     [self moveEnemys];
     //子弹移动
     [self moveBullets];
-    //创建敌人
-    if(self.control.frames%[GameData shareWithLevel:1]->game.enemyCreatFrame == 0){
-        [self createEnemy];
+    //敌人子弹移动
+    [self moveEnemyBullets];
+    
+    Game gameSetData = [GameData shareWithLevel:1]->game;//游戏设置数据
+    //创建敌人1
+    if(self.control.frames%gameSetData.enemy1CreatFrame == 0){
+        [self createEnemyWithType:EnemyType1];
     }
-    //创建子弹
-    if(self.control.frames%self.hero.fireTimeFrame == 0){
-        //音乐
-        [[AudioSource share]playShootMusic];
-        //开火
-        Bullet* bullet = [self.hero fire];
-        [self.view insertSubview:bullet belowSubview:self.hero];
-        [self.bullets addObject:bullet];
+    //大于20s后开始创建敌人2和敌人子弹
+    if(self.control.frames * gameSetData.gameLoopTime >= 10) {
+        //是否能够创建
+        if(self.control.frames % gameSetData.enemy2CreatFrame == 0)
+            [self createEnemyWithType:EnemyType2];
+        //创建敌人子弹
+        [self createEnemyBullets];
+
     }
+    //创建hero子弹
+    [self createHeroBullets];
 }
 //背景移动
 -(void)moveBg {
@@ -146,12 +158,13 @@
 //碰撞检测
 -(void)checkCollision {
     //Sa+Sb < a+b;否则可能发生穿透问题
+    //主角碰撞体
+    CGRect heroRect = CGRectMake(self.hero.LUposition.x, self.hero.LUposition.y, self.hero.collider.width,  self.hero.collider.height);
     //便利敌机
     for(int i=0; i<self.enemys.count; i++) {
         Enemy* enemy = [self.enemys objectAtIndex:i];
         //敌机是否与主角碰撞
         CGRect enemyRect = CGRectMake(enemy.LUposition.x, enemy.LUposition.y, enemy.collider.width, enemy.collider.height);
-        CGRect heroRect = CGRectMake(self.hero.LUposition.x, self.hero.LUposition.y, self.hero.collider.width,  self.hero.collider.height);
         if(CGRectIntersectsRect(enemyRect, heroRect)) {
             [self.hero getHitWithPower:1];
             if(self.hero.isDead){
@@ -207,19 +220,57 @@
             }
         }
     }
+    //遍历敌人子弹是否与主角碰撞
+    for(int j=0; j<self.enemysBullets.count; j++) {
+        Bullet* bullet = [self.enemysBullets objectAtIndex:j];
+        CGRect bulletRect = CGRectMake(bullet.LUposition.x, bullet.LUposition.y, bullet.collider.width, bullet.collider.height);
+        if(CGRectIntersectsRect(bulletRect, heroRect)) {
+            //移除子弹
+            [bullet removeFromSuperview];
+            [self.bullets removeObject:bullet];
+            j--;
+            //英雄受伤
+            [self.hero getHitWithPower:bullet.power];
+            if(self.hero.isDead){
+                //音乐
+                [[AudioSource share]playHeroDead];
+                //动画
+                [self.hero playDead];
+                [self gameOver];
+                break;
+            }
+        }
+    }
 }
 //创建敌人
--(void)createEnemy {
-    int num = [GameData shareWithLevel:1]->game.enemyCreatNum;
+-(void)createEnemyWithType:(EnemyType)enemyType {
+    int num;
+    PlaneData enemySetData; //敌机设置数据
+    if(enemyType == EnemyType1) {//敌机1
+        num = arc4random()%[GameData shareWithLevel:1]->game.enemy1CreatNum;
+        enemySetData = [GameData shareWithLevel:1]->enemy1;
+    }else {//敌机2
+        num = arc4random()%[GameData shareWithLevel:1]->game.enemy2CreatNum;
+        enemySetData = [GameData shareWithLevel:1]->enemy2;
+    }
+    
     for(int i=0; i<num; i++) {
         //创建
-        Enemy* enemy = [[Enemy alloc]initWithFlyAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy1_Fly] WithHitAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy1_Hit] WithDeadAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy1_Dead]];
+        Enemy* enemy;
+        if(enemyType == EnemyType1) {//敌机1
+            enemy = [[Enemy alloc]initWithFlyAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy1_Fly] WithHitAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy1_Hit] WithDeadAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy1_Dead]];
+
+        }else {//敌机2
+            enemy = [[Enemy alloc]initWithFlyAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy2_Fly] WithHitAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy2_Hit] WithDeadAnima:[[ImageSource shareImageSource]getImagesWithImagesType:Enemy2_Dead]];
+        }
         //设置默认值
-        enemy.hp = [GameData shareWithLevel:1]->enemy1.hp;
-        enemy.speed = [GameData shareWithLevel:1]->enemy1.speed;
-        enemy.collider = [GameData shareWithLevel:1]->enemy1.collider;
+        enemy.type = enemyType;
+        enemy.hp = enemySetData.hp;
+        int speedOffset = enemySetData.maxSpeed - enemySetData.minSpeed;
+        enemy.speed = arc4random()%speedOffset + enemySetData.minSpeed;
+        enemy.collider = enemySetData.collider;
         //设置随机位置
-        int x = rand()%(int)(Screen_Width - enemy.size.width);
+        int x = arc4random()%(int)(Screen_Width - enemy.size.width);
         [enemy setPosition:CGPointMake(x, -40)];
         //加入场景
         [self.view insertSubview:enemy belowSubview:self.hero];
@@ -240,6 +291,30 @@
         }
     }
 }
+//创建敌人子弹
+-(void)createEnemyBullets{
+    for(Enemy *enemy in self.enemys) {
+        if(enemy.type == EnemyType2) {
+            Bullet *enemyBullet = [enemy fireWithGameFrames:self.control.frames];
+            //加入图层
+            if(enemyBullet != nil) {
+                [self.view insertSubview:enemyBullet belowSubview:self.hero];
+                [self.enemysBullets addObject:enemyBullet];
+            }
+        }
+    }
+}
+//创建英雄的子弹
+-(void)createHeroBullets {
+    
+    NSMutableArray* bullets = [self.hero fireWithGameFrames:self.control.frames];
+    for(Bullet* bullet in bullets) {
+        //音乐
+        [[AudioSource share]playShootMusic];
+        [self.view insertSubview:bullet belowSubview:self.hero];
+        [self.bullets addObject:bullet];
+    }
+}
 //子弹移动
 -(void)moveBullets {
     for(int i=0; i<self.bullets.count; i++) {
@@ -250,6 +325,21 @@
         if(bullet.LUposition.y < -bullet.size.height) {
             [bullet removeFromSuperview];
             [self.bullets removeObject:bullet];
+            //数组变小
+            i--;
+        }
+    }
+}
+//敌人子弹移动
+-(void)moveEnemyBullets {
+    for(int i=0; i<self.enemysBullets.count; i++) {
+        //NSLog(@"%d", i);
+        Bullet* bullet = [self.enemysBullets objectAtIndex:i];
+        [bullet moveWithDirect:CGPointMake(0, 1)];
+        //判断是否出界
+        if(bullet.LUposition.y > Screen_Height) {
+            [bullet removeFromSuperview];
+            [self.enemysBullets removeObject:bullet];
             //数组变小
             i--;
         }
@@ -293,6 +383,11 @@
         Bullet* enemy = [self.enemys objectAtIndex:0];
         [enemy removeFromSuperview];
         [self.enemys removeObject:enemy];
+    }
+    while (self.enemysBullets.count > 0) {
+        Bullet* bullet = [self.enemysBullets objectAtIndex:0];
+        [bullet removeFromSuperview];
+        [self.enemysBullets removeObject:bullet];
     }
     //重新初始化资源设置
     [self initSource];

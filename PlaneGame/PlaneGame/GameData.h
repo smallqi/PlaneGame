@@ -13,16 +13,20 @@
 typedef struct Game{
     int bgSpeed;
     float gameLoopTime;
-    int maxFrame;
-    int enemyCreatFrame;
-    int enemyCreatNum;
+    int enemy1CreatFrame;
+    int enemy1CreatNum;
+    int enemy2CreatFrame;
+    int enemy2CreatNum;
+    
 }Game;
 //飞机数据
 typedef struct PlaneData{
     int hp;
     int speed;
+    int minSpeed;
+    int maxSpeed;
     CGSize collider;
-    float fireTimeFrame;
+    int fireTimeFrame;
 }PlaneData;
 //子弹
 typedef struct BulletData{
@@ -37,7 +41,9 @@ typedef struct BulletData{
     Game game;
     PlaneData hero;
     PlaneData enemy1;
+    PlaneData enemy2;
     BulletData bullet1;
+    BulletData bullet3;
 }
 
 +(GameData*)shareWithLevel:(int)level;

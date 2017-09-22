@@ -8,7 +8,6 @@
 
 #import "Hero.h"
 #import "ImageSource.h"
-#import "GameData.h"
 #import "Bullet.h"
 
 @implementation Hero
@@ -17,8 +16,8 @@
     self = [super initWithFlyAnima:flys WithHitAnima:hits WithDeadAnima:deads];
     if(self) {
         _state = false;
-        self.fireTimeFrame = 20;
-        _bulletType = 1;
+        self.fireTimeFrame = [GameData shareWithLevel:1]->hero.fireTimeFrame;
+        _bulletType = 2;
         
     }
     return self;
@@ -32,8 +31,12 @@
 }
 
 //fire
--(Bullet*)fire {
+-(NSMutableArray*)fireWithGameFrames:(int)gameFrames {
+    if(gameFrames - self.myframes < [GameData shareWithLevel:1]->hero.fireTimeFrame)
+        return nil;
+    self.myframes = gameFrames;
     
+    NSMutableArray* bullets = [[NSMutableArray alloc]init];
     switch (_bulletType) {
         default:
         case 1:
@@ -46,13 +49,27 @@
             bullet.power = [GameData shareWithLevel:1]->bullet1.power;
             bullet.speed = [GameData shareWithLevel:1]->bullet1.speed;
             
-            return bullet;
+            [bullets addObject:bullet];
         }
             break;
-        case 2:
-            return nil;
+        case 2://三弹齐发
+        {
+            for(int i=0; i<3; i++) {
+                //左边子弹
+                Bullet* bullet = [[Bullet alloc]initWithImage:[[ImageSource shareImageSource]getImageWithImageType:Bullet1]];
+                //设置位置
+                float x = self.LUposition.x + (self.size.width/2-bullet.size.width)/2 + i*( (self.size.width/2-bullet.size.width)/2+bullet.size.width );
+                [bullet setPosition:CGPointMake(x, self.LUposition.y)];
+                //设置速度力量
+                bullet.power = [GameData shareWithLevel:1]->bullet1.power;
+                bullet.speed = [GameData shareWithLevel:1]->bullet1.speed;
+                
+                [bullets addObject:bullet];
+            }
+        }
             break;
-        
     }
+    return bullets;
 }
+
 @end

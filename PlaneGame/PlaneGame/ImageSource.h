@@ -13,6 +13,7 @@ typedef enum ImageType {
     Bg = 0,
     Bullet1,
     Bullet2,
+    Bullet3,
     Gift1,
     Gift2
 }ImageType;

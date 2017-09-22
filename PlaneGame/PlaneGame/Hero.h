@@ -15,5 +15,7 @@
 @property int fireTimeFrame; //发射子弹的间距
 @property int bulletType; //子弹类型
 
+//发射多发子弹
+-(NSMutableArray*)fireWithGameFrames:(int)gameFrames;
 
 @end

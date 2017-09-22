@@ -36,7 +36,6 @@
     self.position = CGPointMake(self.LUposition.x + self.speed*point.x, self.LUposition.y + self.speed*point.y);
     [self setPosition:self.LUposition];
 }
-
 /*
 // Only override drawRect: if you perform custom drawing.
 // An empty implementation adversely affects performance during animation.

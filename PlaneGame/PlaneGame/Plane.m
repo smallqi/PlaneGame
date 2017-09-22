@@ -11,8 +11,6 @@
 @implementation Plane
 {
     CGSize _size;
-    //BOOL _state; //是否处于无敌
-    
     NSMutableArray* _flyImages;
     NSMutableArray* _hitImages;
     NSMutableArray* _deadImages;
@@ -35,8 +33,8 @@
         //设置默认属性
         _hp = 2;
         _speed = 1;
-        //_state = false;
         _collider = _size;
+        _myframes = 0;
         
         [self playFly];
     }
@@ -47,7 +45,8 @@
 -(void)playFly {
     if(self.animating)
        [self stopAnimating];
-    
+    if([self isDead])
+        return;
     self.animationImages = _flyImages;
     self.animationRepeatCount = -1;
     self.animationDuration = 0.1;
@@ -78,7 +77,7 @@
     _LUposition = position;
 }
 //开火 need override
--(Bullet*)fire {
+-(Bullet*)fireWithGameFrames:(int)gameFrames {
     return nil;
 }
 //受到攻击

@@ -18,10 +18,12 @@
             case 1:
                 //游戏数据
                 game.bgSpeed = 5;
-                game.gameLoopTime = 0.1;
-                game.maxFrame = 1000;
-                game.enemyCreatNum = 4;
-                game.enemyCreatFrame = 10;
+                game.gameLoopTime = 0.05;
+                game.enemy1CreatNum = 5;
+                game.enemy1CreatFrame = 10;
+                game.enemy2CreatNum = 2;
+                game.enemy2CreatFrame = 20;
+                
                 //主角的数据
                 hero.hp = 2;
                 hero.speed = 1;
@@ -30,12 +32,25 @@
                 //敌人1的数据
                 enemy1.hp = 1;
                 enemy1.speed = 7;
-                enemy1.fireTimeFrame = 1001;
+                enemy1.minSpeed = 5;
+                enemy1.maxSpeed = 12;
+                enemy1.fireTimeFrame = 3600/game.gameLoopTime;
                 enemy1.collider =  CGSizeMake(38, 28);
+                //敌人2的数据
+                enemy2.hp = 10;
+                enemy2.speed = 7;
+                enemy2.minSpeed = 5;
+                enemy2.maxSpeed = 7;
+                enemy2.fireTimeFrame = 30;
+                enemy2.collider =  CGSizeMake(46, 62);
                 //子弹的数据
                 bullet1.power = 1;
                 bullet1.speed = 20;
                 bullet1.collider = CGSizeMake(6, 14);
+                //敌人子弹的数据
+                bullet3.power = 1;
+                bullet3.speed = 20;
+                bullet3.collider = CGSizeMake(6, 14);
                 break;
             case 2:
                 

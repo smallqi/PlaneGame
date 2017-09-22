@@ -8,9 +8,11 @@
 
 #import <UIKit/UIKit.h>
 #import "Bullet.h"
+#import "GameData.h"
 
 @interface Plane: UIImageView
 
+@property int myframes;  //自身的帧数管理
 @property int hp;
 @property int speed;
 @property CGSize collider;
@@ -27,7 +29,7 @@
 //设置位置
 -(void)setPosition:(CGPoint)position;
 //开火 need override
--(Bullet*)fire;
+-(Bullet*)fireWithGameFrames:(int)gameFrames;
 //受到攻击
 -(void)getHitWithPower:(int)power;
 //是否死亡
