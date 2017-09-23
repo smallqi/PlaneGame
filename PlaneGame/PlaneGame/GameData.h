@@ -17,6 +17,7 @@ typedef struct Game{
     int enemy1CreatNum;
     int enemy2CreatFrame;
     int enemy2CreatNum;
+    int dropGiftChance; //以10为底
     
 }Game;
 //飞机数据

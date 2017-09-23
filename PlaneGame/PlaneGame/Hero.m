@@ -18,7 +18,7 @@
         _state = false;
         self.fireTimeFrame = [GameData shareWithLevel:1]->hero.fireTimeFrame;
         _bulletType = 2;
-        
+        _bulletNum = 0;
     }
     return self;
 }
@@ -66,10 +66,21 @@
                 
                 [bullets addObject:bullet];
             }
+            //减少子弹
+            self.bulletNum--;
+            //用完子弹降级
+            if(self.bulletNum <= 0) {
+                self.bulletNum = 0;
+                self.bulletType = 1;
+            }
         }
             break;
     }
     return bullets;
 }
-
+//升级子弹
+-(void)updateBulllet {
+    self.bulletNum = 200;
+    self.bulletType = 2;
+}
 @end

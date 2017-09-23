@@ -38,6 +38,8 @@
 @property(strong, nonatomic) NSMutableArray* enemys;
 //敌人子弹
 @property(strong, nonatomic) NSMutableArray* enemysBullets;
+//道具
+@property(strong, nonatomic) NSMutableArray* gifts;
 
 @end
 
@@ -79,6 +81,8 @@
     self.enemys = [[NSMutableArray alloc]init];
     //敌人子弹
     self.enemysBullets = [[NSMutableArray alloc]init];
+    //道具
+    self.gifts = [[NSMutableArray alloc]init];
 }
 //初始化资源
 -(void)initSource {
@@ -137,6 +141,9 @@
     }
     //创建hero子弹
     [self createHeroBullets];
+    //更新子弹面板
+    self.control.bombNum = self.hero.bulletNum;
+    [self.control updateBombLabel];
 }
 //背景移动
 -(void)moveBg {
@@ -168,27 +175,15 @@
         if(CGRectIntersectsRect(enemyRect, heroRect)) {
             [self.hero getHitWithPower:1];
             if(self.hero.isDead){
-                //音乐
-                [[AudioSource share]playHeroDead];
-                //动画
-                [self.hero playDead];
-                [self gameOver];
+                [self deadDealWithHero];
                 break;
             }
             [enemy getHitWithPower:1];
             if(enemy.isDead){
-                //得分
-                self.control.score += 10;
-                [self.control updateScoreLabel];
-                //播放音乐
-                [[AudioSource share]playExploreMusic];
-                //移除敌人
-                [enemy playDead];
-                [self performSelector:@selector(removeViewFromGame:) withObject:enemy afterDelay:0.5];
+                [self deadDealWithEnemy:enemy];
                 [self.enemys removeObject:enemy];
                 //数组大小发生变化
                 i--;
-                //敌机已死，不可能发生子弹碰撞
                 continue;
             }
         }
@@ -204,17 +199,11 @@
                 //敌人受伤
                 [enemy getHitWithPower:bullet.power];
                 if(enemy.isDead) {
-                    //得分
-                    self.control.score += 10;
-                    [self.control updateScoreLabel];
-                    //播放音乐
-                    [[AudioSource share]playExploreMusic];
-                    //移除敌人
-                    [enemy playDead];
-                    [self performSelector:@selector(removeViewFromGame:) withObject:enemy afterDelay:0.5];
+                    [self deadDealWithEnemy:enemy];
                     [self.enemys removeObject:enemy];
                     //数组大小发生变化
                     i--;
+                    continue;
                     break;
                 }
             }
@@ -232,12 +221,31 @@
             //英雄受伤
             [self.hero getHitWithPower:bullet.power];
             if(self.hero.isDead){
-                //音乐
-                [[AudioSource share]playHeroDead];
-                //动画
-                [self.hero playDead];
-                [self gameOver];
+                [self deadDealWithHero];
                 break;
+            }
+        }
+    }
+    //遍历道具是否被主角吸收
+    for(int i=0; i<self.gifts.count; i++) {
+        Gift *gift = [self.gifts objectAtIndex:i];
+        CGRect giftRect = CGRectMake(gift.LUposition.x, gift.LUposition.y, gift.collider.width, gift.collider.height);
+        if(CGRectIntersectsRect(giftRect, heroRect)) {
+            //加强主角子弹
+            [self.hero updateBulllet];
+            //移除道具
+            [gift removeFromSuperview];
+            [self.gifts removeObject:gift];
+            i--;
+        }else {
+            //减少道具滞留时间
+            gift.stayTime--;
+            if(gift.stayTime <= 0) {
+                //移除道具
+                [gift removeFromSuperview];
+                [self.gifts removeObject:gift];
+                i--;
+
             }
         }
     }
@@ -275,6 +283,33 @@
         //加入场景
         [self.view insertSubview:enemy belowSubview:self.hero];
         [self.enemys addObject:enemy];    }
+}
+//敌人死亡处理
+-(void)deadDealWithEnemy:(Enemy*)enemy {
+    //得分
+    self.control.score += 10;
+    [self.control updateScoreLabel];
+    //播放音乐
+    [[AudioSource share]playExploreMusic];
+    //移除敌人
+    [enemy playDead];
+    [self performSelector:@selector(removeViewFromGame:) withObject:enemy afterDelay:0.5];
+    //是否掉落道具
+    if(enemy.type == EnemyType2 && arc4random()%10 >= 10-[GameData shareWithLevel:1]->game.dropGiftChance) {
+        Gift *gift = [[Gift alloc]initWithImage:[[ImageSource shareImageSource]getImageWithImageType:Gift1]];
+        [gift setPosition:enemy.LUposition];
+        //加入视图
+        [self.view insertSubview:gift belowSubview:self.hero];
+        [self.gifts addObject:gift];
+    }
+}
+//英雄死亡处理
+-(void)deadDealWithHero {
+    //音乐
+    [[AudioSource share]playHeroDead];
+    //动画
+    [self.hero playDead];
+    [self gameOver];
 }
 //移动敌人
 -(void)moveEnemys {
@@ -388,6 +423,11 @@
         Bullet* bullet = [self.enemysBullets objectAtIndex:0];
         [bullet removeFromSuperview];
         [self.enemysBullets removeObject:bullet];
+    }
+    while (self.gifts.count > 0) {
+        Gift *gift = [self.gifts objectAtIndex:0];
+        [gift removeFromSuperview];
+        [self.gifts removeObject:gift];
     }
     //重新初始化资源设置
     [self initSource];

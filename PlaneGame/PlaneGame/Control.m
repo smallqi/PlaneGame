@@ -61,7 +61,7 @@
     _timeLabel.text = [NSString stringWithFormat:@"%02d:%02d", second/60, second%60];
 }
 -(void)updateBombLabel {
-    _bombLabel.text = [NSString stringWithFormat:@"%d", self.bombNum];
+    _bombLabel.text = [NSString stringWithFormat:@"Bullet:%d", self.bombNum];
 }
 
 @end

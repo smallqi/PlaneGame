@@ -14,8 +14,11 @@
 @property(readonly)BOOL state; //是否处于无敌状态
 @property int fireTimeFrame; //发射子弹的间距
 @property int bulletType; //子弹类型
+@property int bulletNum; //子弹数量
 
 //发射多发子弹
 -(NSMutableArray*)fireWithGameFrames:(int)gameFrames;
+//update子弹
+-(void)updateBulllet;
 
 @end

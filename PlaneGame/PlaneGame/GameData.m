@@ -19,11 +19,11 @@
                 //游戏数据
                 game.bgSpeed = 5;
                 game.gameLoopTime = 0.05;
-                game.enemy1CreatNum = 5;
+                game.enemy1CreatNum = 4;
                 game.enemy1CreatFrame = 10;
                 game.enemy2CreatNum = 2;
-                game.enemy2CreatFrame = 20;
-                
+                game.enemy2CreatFrame = 30;
+                game.dropGiftChance = 5; //以10为底，意味为x/10的概率
                 //主角的数据
                 hero.hp = 2;
                 hero.speed = 1;
@@ -41,7 +41,7 @@
                 enemy2.speed = 7;
                 enemy2.minSpeed = 5;
                 enemy2.maxSpeed = 7;
-                enemy2.fireTimeFrame = 30;
+                enemy2.fireTimeFrame = 50;
                 enemy2.collider =  CGSizeMake(46, 62);
                 //子弹的数据
                 bullet1.power = 1;
